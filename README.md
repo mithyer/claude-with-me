@@ -1,70 +1,67 @@
 # Claude With Me
 
-Cross-project collaboration standards for iOS development with Claude Code.
+## For Claude: Read This First
 
-## Purpose
+When you read this file, follow these steps in order:
 
-This repository contains shared conventions, standards, and guidelines for collaborating with Claude on iOS projects. By maintaining these standards in a separate repository, they can be easily applied across multiple iOS projects.
+### Step 1: Load Conventions
+Read `ios-conventions.md` in this same directory and apply all conventions to the current session.
 
-## Contents
+### Step 2: Load Project Context
+Read `../project-context/README.md` to understand available projects and their context.
 
-### `ios-conventions.md`
-The main conventions document covering:
-- Project structure standards
-- Swift coding style
-- Architecture patterns
-- Testing guidelines
-- Git workflow
-- Communication patterns with Claude
-- iOS best practices
+### Step 3: Ask User
+Ask the user: **"Which project will we be working on?"** and list the available projects from project-context.
 
-### `.claude/commands/`
-Custom slash commands for Claude Code:
-- `/load-conventions` - Load iOS conventions into current session
-- `/review-swift` - Comprehensive Swift code review
+### Step 4: Load Project Details
+Once the user specifies a project, read that project's README from `../project-context/{ProjectName}/README.md` to understand its architecture and current state.
 
-## Usage
+---
 
-### In New Projects
+## What You'll Know After Loading
 
-1. When starting work on an iOS project, use the load conventions command:
-   ```
-   /load-conventions
-   ```
+After completing the steps above, you should understand:
+- Message prefixes (`[fix]`, `[imp]`, `[add]`, `[review]`, etc.)
+- Scope limiters (`<dir:>`, `<file:>`, `<class:>`, `<func:>`)
+- Swift/iOS coding standards and best practices
+- The specific project's architecture and context
 
-2. Claude will read and apply these standards to all interactions
+---
 
-### Updating Conventions
+## Quick Reference
 
-1. Edit `ios-conventions.md` as your team's practices evolve
-2. Commit and push changes
-3. Pull updates in other projects
+| Prefix | Action |
+|--------|--------|
+| `[fix]` | Bug fix |
+| `[imp]` | Code improvement |
+| `[add]` | New feature |
+| `[rm]` | Remove feature/code |
+| `[review]` | Code review (read-only) |
+| `[search]` | Search codebase |
+| `[add-note]` | Add documentation |
+| `[file-add]<File>` | Create new file |
+| `[file-rm]<File>` | Delete file |
+| `[file-rn]<A,B>` | Rename file |
+| `[:read]` suffix | Dry run, no changes |
 
-### Cross-Project Consistency
+Scope: `<dir:path>`, `<file:Name.swift:10-20>`, `<class:ClassName>`, `<func:funcName>`
 
-By referencing this repository across multiple iOS projects, you ensure:
-- Consistent code style
-- Common architecture patterns
-- Unified communication methods
-- Shared best practices
+---
 
-## Structure
+## Related Directories
 
 ```
-claude-with-me/
-├── README.md                 # This file
-├── ios-conventions.md       # Main conventions document
-└── .claude/
-    └── commands/            # Custom slash commands
-        ├── load-conventions.md
-        └── review-swift.md
+../
+├── claude-with-me/          # This repo - conventions & standards
+│   ├── README.md            # This file (entry point)
+│   └── ios-conventions.md   # Detailed conventions
+│
+└── project-context/         # Project-specific context & notes
+    ├── README.md            # Overview of all projects
+    └── {ProjectName}/       # Per-project context
+        └── README.md        # Project architecture & state
 ```
 
-## Version
+---
 
-Current Version: 1.0
-Last Updated: 2026-01-19
-
-## License
-
-See LICENSE file for details.
+*Version: 1.2 | Updated: 2026-01-19*

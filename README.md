@@ -4,47 +4,429 @@
 
 When you read this file, follow these steps in order:
 
-### Step 1: Load Conventions
-Read `ios-conventions.md` in this same directory and apply all conventions to the current session.
-
-### Step 2: Load Project Context
+### Step 1: Load Project Context
 Read `../project-context/README.md` to understand available projects and their context.
 
-### Step 3: Ask User
+### Step 2: Ask User
 Ask the user: **"Which project will we be working on?"** and list the available projects from project-context.
 
-### Step 4: Load Project Details
+### Step 3: Load Project Details
 Once the user specifies a project, read that project's README from `../project-context/{ProjectName}/README.md` to understand its architecture and current state.
 
----
-
-## What You'll Know After Loading
-
-After completing the steps above, you should understand:
-- Message prefixes (`[fix]`, `[imp]`, `[add]`, `[review]`, etc.)
-- Scope limiters (`<dir:>`, `<file:>`, `<class:>`, `<func:>`)
-- Swift/iOS coding standards and best practices
-- The specific project's architecture and context
+### Step 4: Load Platform Conventions (if needed)
+Based on project type, load the appropriate conventions file:
+- iOS/Swift: `ios-conventions.md`
+- (Future: `backend-conventions.md`, `web-conventions.md`, etc.)
 
 ---
 
-## Quick Reference
+## Code Modification Modes
 
-| Prefix | Action |
-|--------|--------|
-| `[fix]` | Bug fix |
-| `[imp]` | Code improvement |
-| `[add]` | New feature |
-| `[rm]` | Remove feature/code |
-| `[review]` | Code review (read-only) |
-| `[search]` | Search codebase |
-| `[add-note]` | Add documentation |
-| `[file-add]<File>` | Create new file |
-| `[file-rm]<File>` | Delete file |
-| `[file-rn]<A,B>` | Rename file |
-| `[:read]` suffix | Dry run, no changes |
+**Before ANY code modification, ask the user to choose a mode:**
 
-Scope: `<dir:path>`, `<file:Name.swift:10-20>`, `<class:ClassName>`, `<func:funcName>`
+### Mode 1: Scoped Mode (LIMIT)
+- Each change limited to **≤100 lines** of code added/removed
+- If exceeds 100 lines, **must split** into smaller tasks
+- Create task tracking files in `../project-context/{Project}/`
+- Link code comments to task files
+
+### Mode 2: Freeform Mode (FREE)
+- No line limits
+- Make changes as needed to complete the task
+- Suitable for smaller, well-defined changes
+
+---
+
+## Command Prefixes
+
+Use these prefixes at the start of your messages to indicate intent:
+
+| Prefix | Action | Modifies Code |
+|--------|--------|---------------|
+| `[fix]` | Bug fix | Yes |
+| `[imp]` | Code improvement | Yes |
+| `[add]` | New feature | Yes |
+| `[rm]` | Remove feature/code | Yes |
+| `[review]` | Code review | No |
+| `[search]` | Search codebase | No |
+| `[read]` | Preview changes (dry run) | No |
+| `[think]` | Deep thinking & exploration | No |
+| `[doit]` | Execute previous read/think result | Yes |
+| `[check]` | Review resolved conflicts (:keep) | No |
+| `[add-note]` | Add documentation | Yes |
+| `[file-add]<File>` | Create new file | Yes |
+| `[file-rm]<File>` | Delete file | Yes |
+| `[file-rn]<A,B>` | Rename file | Yes |
+| `[file-mv]<A,B>` | Move file (alias for rn) | Yes |
+| `[list-cmd]` | List all commands | No |
+
+### Scope Limiting
+
+Add scope specifiers after the prefix tag:
+
+```
+[prefix]<dir:path file:FileA:10-20 class:ClassA func:functionName> description
+```
+
+**Parameters:**
+- `dir:` - Limit to specific directory path
+- `file:` - Limit to specific files (with optional line numbers: `file:Name.swift:10-20`)
+- `class:` - Limit to specific classes
+- `func:` - Limit to specific functions/methods
+
+**Examples:**
+- `[fix]<file:ConnectionManager.swift> Memory leak in connection handling`
+- `[imp]<class:UserViewModel,ProfileViewModel> Better error handling`
+- `[add]<dir:Features/Auth> Biometric authentication support`
+- `[review]<file:Service.swift:100-150 func:fetchUser> Check this area`
+
+### Command Modifiers
+
+Modifiers can be added to any command with `:modifier` syntax. **Multiple modifiers can be combined.**
+
+| Modifier | Effect |
+|----------|--------|
+| `:keep` | Insert conflict markers, user resolves |
+| `:log` | Log changes to project-context |
+
+**Combined example:** `[fix:keep:log]<file:Manager.swift> Memory leak`
+
+---
+
+#### `:keep` - Conflict Marker Mode
+
+```
+[fix:keep] Memory leak in ConnectionManager
+[imp:keep]<func:connect> Refactor to async/await
+```
+
+Claude will insert **git-style conflict markers** instead of directly replacing code:
+
+```swift
+<<<<<<< BEFORE
+func connect() {
+    startConnection()
+}
+=======
+func connect() async throws {
+    try await startConnection()
+}
+>>>>>>> CLAUDE: Refactored to async/await
+```
+
+**Workflow:**
+1. Claude inserts conflict markers for each change
+2. User resolves conflicts in IDE (accept/reject/modify)
+3. User says `[check]` or "检查"
+4. Claude reviews the resolved code
+5. Repeat until both satisfied
+
+**Best for:** Critical code, learning, uncertain changes.
+
+---
+
+#### `:log` - Change Logging Mode
+
+```
+[fix:log] Memory leak in ConnectionManager
+[add:log] New authentication feature
+```
+
+Claude will log all changes to `../project-context/{Project}/CHANGES/`:
+
+```
+../project-context/{Project}/CHANGES/
+└── 2026-01-20-fix-memory-leak.md
+```
+
+**Log file format:**
+```markdown
+# Fix: Memory Leak in ConnectionManager
+
+## Date
+2026-01-20
+
+## Files Modified
+- `Common/Manager/ConnectionManager.swift:45-60`
+
+## Reasoning
+The closure was capturing `self` strongly, causing a retain cycle...
+
+## Changes
+### ConnectionManager.swift
+- Line 48: Changed `{ self.handle() }` to `{ [weak self] in self?.handle() }`
+- Line 55: Added `deinit` to verify deallocation
+
+## Notes
+Consider auditing other managers for similar issues.
+```
+
+**Best for:** Tracking decisions, team communication, future reference.
+
+---
+
+#### Combined Modifiers
+
+```
+[fix:keep:log] Memory leak - insert markers AND log changes
+[imp:read:log] Analyze improvements and log plan (no changes)
+```
+
+Order doesn't matter: `[fix:keep:log]` = `[fix:log:keep]`
+
+---
+
+## Command Details
+
+### `[fix]` - Bug Fix
+```
+[fix] The app crashes when tapping login button
+[fix]<file:NetworkManager.swift:45-80> Fix error handling
+```
+Claude will: Focus on root cause, add defensive checks, consider edge cases.
+
+### `[imp]` - Code Improvement
+```
+[imp] This method is too long and complex
+[imp]<func:connectDevice> Better error handling
+```
+Claude will: Apply best practices, optimize performance, improve readability.
+
+### `[add]` - New Feature
+```
+[add] Add biometric authentication
+[add]<dir:Features/Settings> Dark mode support
+```
+Claude will: Design architecture first, follow existing patterns, implement with proper error handling.
+
+### `[rm]` - Remove Feature/Code
+```
+[rm] Remove deprecated authentication method
+[rm]<file:LegacyAPI.swift,OldManager.swift> Remove old code
+```
+Claude will: Check dependencies, remove carefully, clean up related resources.
+
+### `[review]` - Code Review (Read-Only)
+```
+[review]<file:ConnectionManager.swift> Check for memory leaks
+[review]<class:NetworkClient> Review error handling
+```
+Claude will: Analyze issues, check thread safety, suggest improvements without implementing.
+
+### `[search]` - Search Codebase (Read-Only)
+```
+[search] Where is Bluetooth connection handled?
+[search] All usages of deprecated API
+```
+Claude will: Search and list all relevant files/locations with context.
+
+### `[read]` - Preview Changes (Read-Only)
+```
+[read:fix] Memory leak in ConnectionManager
+[read:add] New authentication feature
+[read:imp]<class:NetworkManager> Refactor error handling
+```
+Claude will:
+- ✅ Analyze code and show **exactly what would be changed**
+- ✅ Provide specific code examples of the modifications
+- ✅ List affected files and line numbers
+- ❌ **NEVER modify any files** - preview only
+
+#### Targeted Preview with `[read:cmd]`
+
+| Command | Preview Focus |
+|---------|---------------|
+| `[read:fix]` | What code changes would fix this bug |
+| `[read:imp]` | What refactoring would be applied |
+| `[read:add]` | What new code would be added |
+| `[read:rm]` | What would be deleted |
+
+### `[think]` - Deep Thinking & Exploration (Read-Only)
+```
+[think] How should we architect the offline sync feature?
+[think]<class:ConnectionManager> What could cause the intermittent disconnections?
+```
+Claude will:
+- **Go deeper**: Analyze root causes, not just symptoms
+- **Go broader**: Consider multiple approaches, alternatives, trade-offs
+- **Be divergent**: Explore edge cases, future implications, architectural impacts
+- **Question assumptions**: Challenge existing design decisions if needed
+- **Connect dots**: Link to related systems, patterns, or potential side effects
+- ❌ **NEVER modify any files** - thinking only
+
+#### Targeted Thinking with `[think:cmd]`
+
+| Command | Focus Area |
+|---------|------------|
+| `[think:fix]` | Root cause analysis, why bug occurs, potential fixes, side effects |
+| `[think:imp]` | Improvement strategies, refactoring approaches, performance gains |
+| `[think:add]` | Feature design, architecture options, implementation trade-offs |
+| `[think:rm]` | Removal impact, dependencies, migration strategy |
+
+**Examples:**
+```
+[think:fix] App crashes on login - what could be the root causes?
+[think:imp]<class:NetworkManager> How can we improve error handling?
+[think:add] Offline sync feature - what are the architectural options?
+[think:rm] Legacy auth system - what would be affected by removal?
+```
+
+---
+
+#### `[read]` vs `[think]` Comparison
+
+Both are **read-only** but serve different purposes:
+
+| | `[read]` | `[think]` |
+|--|----------|-----------|
+| **Purpose** | Preview specific changes | Explore & analyze deeply |
+| **Output** | "I would change X to Y" | "Here are possibilities/risks/trade-offs" |
+| **Focus** | Concrete, convergent | Abstract, divergent |
+| **Depth** | Normal | Deeper & broader |
+| **When to use** | Know what you want, preview first | Uncertain, need exploration |
+
+**Example:**
+- `[read:fix] Memory leak` → "Change line 48: `self` → `[weak self]`"
+- `[think:fix] Memory leak` → "3 possible causes... Approach A vs B... Similar issues elsewhere?... Design reconsideration..."
+
+### `[doit]` - Execute Previous Analysis
+
+Execute the result from a previous `[read]` or `[think]` command.
+
+```
+[doit]           # Execute the analyzed solution
+[doit] A         # Execute option A (if multiple options)
+[doit:keep]      # Execute with conflict markers
+[doit:log]       # Execute and log changes
+[doit:keep:log]  # Both
+```
+
+**Workflow:**
+```
+User: [think:fix] Memory leak in ConnectionManager
+Claude: Found 3 possible approaches:
+        A) Add [weak self] to closure
+        B) Refactor to use delegation pattern
+        C) Use Combine instead of closure
+
+User: [doit] A
+Claude: (executes option A)
+```
+
+**If single solution:** Claude executes immediately.
+**If multiple options:** Claude asks user to choose (A/B/C or describe).
+
+**Modifiers work with `[doit]`:**
+- `[doit:keep]` - Execute with conflict markers
+- `[doit:log]` - Execute and log to CHANGES/
+
+### `[check]` - Review Resolved Conflicts
+
+After resolving conflicts from `:keep` mode, use `[check]` for Claude to review.
+
+```
+[check]          # Review my conflict resolutions
+[check] Done     # Finished resolving, please verify
+```
+
+**Workflow:**
+1. `[fix:keep] Memory leak` → Claude inserts conflict markers
+2. User resolves conflicts in IDE
+3. `[check]` → Claude reviews the resolutions
+4. Repeat until both satisfied
+
+### `[add-note]` - Add Documentation
+```
+[add-note]<class:ConnectionManager> Add class documentation
+[add-note]<func:connect> Explain the connection flow
+```
+Claude will: Add clear comments explaining WHY, not just WHAT.
+
+### `[file-add]<File>` - Create New File
+```
+[file-add]<AuthService.swift> Create authentication service
+[file-add]<UserViewModel.swift> Add view model
+```
+Claude will: Create file with appropriate boilerplate and structure.
+
+### `[file-rm]<File>` - Delete File
+```
+[file-rm]<LegacyManager.swift> Remove deprecated manager
+```
+Claude will: Check for usages first, warn if still referenced.
+
+### `[file-rn]<Old,New>` - Rename File
+```
+[file-rn]<UserManager.swift,UserService.swift> Better naming
+```
+Claude will: Update all imports and references in other files.
+
+---
+
+## Mode 1: Task Tracking System
+
+### Directory Structure
+```
+../project-context/{ProjectName}/
+├── README.md              # Project overview
+├── TODO/                  # New features & improvements
+│   ├── {task-name}.md     # Active task
+│   └── _archive/          # Completed tasks (100%)
+└── FIXME/                 # Bug fixes
+    ├── {bug-name}.md      # Active fix
+    └── _archive/          # Completed fixes (100%)
+```
+
+### Task File Format
+```markdown
+# {Task Title}
+
+## Status
+- [ ] In Progress | [x] Paused | [x] Completed
+- Progress: 45%
+
+## Description
+Brief description of what needs to be done.
+
+## Code References
+- `path/to/File.swift:123` - // TODO: {task-name} - description
+
+## Subtasks
+- [x] Step 1 completed
+- [ ] Step 2 in progress
+- [ ] Step 3 pending
+
+## Notes
+Any relevant notes or decisions.
+```
+
+### Code Comment Linking
+```swift
+// TODO: {task-name} - Brief description
+// Links to: ../project-context/{Project}/TODO/{task-name}.md
+
+// FIXME: {bug-name} - Brief description
+// Links to: ../project-context/{Project}/FIXME/{bug-name}.md
+```
+
+### Task Lifecycle
+1. **Create** - New task file when starting work
+2. **Update** - Track progress (0-100%)
+3. **Pause** - Mark as paused, can resume later
+4. **Complete** - 100% done, move to `_archive/`
+
+---
+
+## Best Practices for Requests
+
+**DO:**
+- Provide context: "In the `UserProfileController`, I need to..."
+- Specify file path if known
+- Share error messages or logs in full
+
+**DON'T:**
+- Say "fix the code" without specifying what's wrong
+- Assume Claude knows current state without reading files
 
 ---
 
@@ -54,14 +436,17 @@ Scope: `<dir:path>`, `<file:Name.swift:10-20>`, `<class:ClassName>`, `<func:func
 ../
 ├── claude-with-me/          # This repo - conventions & standards
 │   ├── README.md            # This file (entry point)
-│   └── ios-conventions.md   # Detailed conventions
+│   └── ios-conventions.md   # iOS-specific conventions
 │
 └── project-context/         # Project-specific context & notes
     ├── README.md            # Overview of all projects
-    └── {ProjectName}/       # Per-project context
-        └── README.md        # Project architecture & state
+    └── {ProjectName}/
+        ├── README.md        # Project architecture
+        ├── TODO/            # Feature tasks (Mode 1: LIMIT)
+        ├── FIXME/           # Bug fix tasks (Mode 1: LIMIT)
+        └── CHANGES/         # Change logs (:log modifier)
 ```
 
 ---
 
-*Version: 1.2 | Updated: 2026-01-19*
+*Version: 2.0 | Updated: 2026-01-20*

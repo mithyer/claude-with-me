@@ -53,6 +53,8 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[think]` | Deep thinking & exploration | No |
 | `[doit]` | Execute previous read/think result | Yes |
 | `[check]` | Review resolved conflicts (:keep) | No |
+| `[again]` | Resume/retry interrupted operation | Yes |
+| `[git]` | Git operations (commit, push, etc.) | No |
 | `[add-note]` | Add documentation | Yes |
 | `[file-add]<File>` | Create new file | Yes |
 | `[file-rm]<File>` | Delete file | Yes |
@@ -334,6 +336,63 @@ After resolving conflicts from `:keep` mode, use `[check]` for Claude to review.
 2. User resolves conflicts in IDE
 3. `[check]` → Claude reviews the resolutions
 4. Repeat until both satisfied
+
+### `[again]` - Resume or Retry Interrupted Operation
+
+Resume or retry a previously interrupted command.
+
+```
+[again]            # Smart: check state, decide continue or retry
+[again:continue]   # Continue from where interrupted (skip completed)
+[again:retry]      # Full retry (ignore previous progress)
+```
+
+**Smart mode behavior (`[again]`):**
+1. Recall the last interrupted command
+2. Check current state (git diff, file changes)
+3. Detect user's manual modifications
+4. Report: "Detected you changed X, now continuing..."
+5. Execute appropriately
+
+**Examples:**
+```
+User: [fix] Memory leak in ConnectionManager
+Claude: (starts fixing, step 1 done, step 2 in progress...)
+User: (interrupts, makes manual changes)
+User: [again]
+Claude: "Last command: [fix] Memory leak
+        Detected: You modified line 52-55
+        Continuing with remaining steps..."
+```
+
+```
+User: [again:retry]    # Start over completely
+User: [again:continue] # Skip completed parts
+```
+
+### `[git]` - Git Operations
+
+Perform git-related operations.
+
+```
+[git] status                    # Show git status
+[git] commit                    # Help write commit message and commit
+[git] push                      # Push to remote
+[git] pr                        # Create pull request
+[git] diff                      # Show changes
+[git] log                       # Show recent commits
+```
+
+**Common workflows:**
+
+```
+[git] commit           # Claude checks status, diff, writes commit message
+[git] commit --amend   # Amend last commit (with safety checks)
+[git] pr               # Create PR with summary from commits
+[git] sync             # Pull and rebase from main
+```
+
+**Safety:** Claude will warn before destructive operations (force push, hard reset, etc.)
 
 ### `[add-note]` - Add Documentation
 ```

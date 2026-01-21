@@ -136,6 +136,17 @@ Modifiers can be added to any command with `:modifier` syntax. **Multiple modifi
 |----------|--------|
 | `:keep` | Insert conflict markers, user resolves |
 | `:log` | Log changes to project-context |
+| `:lite` | Low-token mode |
+| `:read` | Preview only (dry run) |
+| `:think` | Deep analysis mode |
+
+**Order doesn't matter** - these are all equivalent:
+```
+[fix:keep:log] = [keep:fix:log] = [log:keep:fix]
+[read:fix] = [fix:read]
+[think:add] = [add:think]
+[lite:imp] = [imp:lite]
+```
 
 **Combined example:** `[fix:keep:log]<file:Manager.swift> Memory leak`
 

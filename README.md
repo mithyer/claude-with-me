@@ -106,6 +106,7 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[todo]` | Work on a TODO task from project-context | Yes |
 | `[fixme]` | Work on a FIXME task from project-context | Yes |
 | `[question]` / `[que]` | General question (not project-specific) | No |
+| `[notice]` | Inform Claude of a result (minimal response) | No |
 | `[add-note]` | Add documentation | Yes |
 | `[file-add]<File>` | Create new file | Yes |
 | `[file-rm]<File>` | Delete file | Yes |
@@ -558,6 +559,21 @@ Ask questions not tied to the current project. Claude thinks globally across the
 - No file reading/searching
 - Pure knowledge-based answer
 - Scope: general programming concepts, patterns, best practices
+
+### `[notice]` - Inform Claude
+
+Tell Claude a result or status. Claude acknowledges with minimal output.
+
+```
+[notice] all tests passed
+[notice] I fixed the bug manually
+[notice] build succeeded
+```
+
+**Behavior:**
+- Claude receives and acknowledges the information
+- Minimal response (e.g., "Got it." / "Noted." / "✓")
+- No action taken unless explicitly needed
 
 ### `[add-note]` - Add Documentation
 ```

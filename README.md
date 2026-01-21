@@ -1,5 +1,7 @@
 # Claude With Me
 
+> **Language Policy:** This repo is **public**. All documentation must be in **English only**. Chinese is allowed in `../project-context/` (private repo).
+
 ## For Claude: Read This First
 
 When you read this file, follow these steps in order:
@@ -26,7 +28,7 @@ Based on project type, load the appropriate conventions file:
 
 | Estimated Lines | Action |
 |-----------------|--------|
-| **≤200 lines** | "代码量约 X 行，直接执行" - proceed without asking |
+| **≤200 lines** | "About XXX code line，exexute!" - proceed without asking |
 | **>200 lines** | Offer mode selection below |
 
 ### Mode 1: Scoped Mode (LIMIT)
@@ -46,7 +48,7 @@ Based on project type, load the appropriate conventions file:
 
 When code exceeds 200 lines, Claude builds **incrementally**:
 
-**Pass 1 - Structure (搭架子):**
+**Pass 1 - Structure:**
 ```swift
 class AuthService {
     private let networkClient: NetworkClient
@@ -69,7 +71,7 @@ class AuthService {
 }
 ```
 
-**Pass 2+ - Implementation (填内容):**
+**Pass 2+ - Implementation:**
 - Claude fills TODO sections incrementally
 - Each pass stays within **≤200 lines**
 - User can review structure before implementation
@@ -101,6 +103,9 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[again]` | Resume/retry interrupted operation | Yes |
 | `[git]` | Git operations (commit, push, etc.) | No |
 | `[lite]` | Low-token mode (I provide, you execute) | Partial |
+| `[todo]` | Work on a TODO task from project-context | Yes |
+| `[fixme]` | Work on a FIXME task from project-context | Yes |
+| `[question]` / `[que]` | General question (not project-specific) | No |
 | `[add-note]` | Add documentation | Yes |
 | `[file-add]<File>` | Create new file | Yes |
 | `[file-rm]<File>` | Delete file | Yes |
@@ -176,7 +181,7 @@ func connect() async throws {
 **Workflow:**
 1. Claude inserts conflict markers for each change
 2. User resolves conflicts in IDE (accept/reject/modify)
-3. User says `[check]` or "检查"
+3. User says `[check]`
 4. Claude reviews the resolved code
 5. Repeat until both satisfied
 
@@ -502,6 +507,57 @@ Please paste these changes, run tests, and tell me the result.
 - Test/build cycles (you see output faster anyway)
 
 **Can combine:** `[lite:fix]`, `[lite:add]`, `[lite:imp]`
+
+### `[todo]` / `[fixme]` - Work on Tracked Tasks
+
+Execute tasks from `../project-context/{Project}/TODO/` or `FIXME/`.
+
+```
+[todo] valuewrapper tests     # Work on valuewrapper-tests.md
+[todo] phase 2                # Context: continue phase 2 of current task
+[fixme] memory leak           # Work on memory-leak.md
+[todo]                        # List available TODOs
+```
+
+**Behavior:**
+1. Claude reads task files from project-context
+2. If description matches one task clearly → Start working
+3. If ambiguous → Ask user to confirm which task
+
+**Examples:**
+```
+User: [todo] lock tests
+Claude: Found: TODO/lock-tests-phase2.md (60% complete)
+        Remaining: Edge cases, Performance, Stress tests
+        Starting with edge cases...
+
+User: [todo]
+Claude: Available TODOs for RYKit:
+        1. lock-tests-phase2.md (60%) - Edge cases pending
+        2. valuewrapper-tests.md (0%) - Not started
+        Which one?
+
+User: [fixme]
+Claude: No active FIXMEs for this project.
+```
+
+**Modifiers work:** `[todo:lite]`, `[todo:keep]`, `[fixme:log]`
+
+### `[question]` / `[que]` - General Question
+
+Ask questions not tied to the current project. Claude thinks globally across the programming world.
+
+```
+[que] What's the difference between actor and class in Swift?
+[question] Best practices for dependency injection?
+[que] How does CoW (Copy-on-Write) work?
+```
+
+**Behavior:**
+- No project context loaded
+- No file reading/searching
+- Pure knowledge-based answer
+- Scope: general programming concepts, patterns, best practices
 
 ### `[add-note]` - Add Documentation
 ```

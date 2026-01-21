@@ -106,7 +106,8 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[todo]` | Work on a TODO task from project-context | Yes |
 | `[fixme]` | Work on a FIXME task from project-context | Yes |
 | `[question]` / `[que]` | General question (not project-specific) | No |
-| `[notice]` | Inform Claude of a result (minimal response) | No |
+| `[notice]` / `[noti]` | Inform Claude of a result (minimal response) | No |
+| `[whatfuck]` / `[wtf]` | Reset context, clear hallucinations | No |
 | `[add-note]` | Add documentation | Yes |
 | `[file-add]<File>` | Create new file | Yes |
 | `[file-rm]<File>` | Delete file | Yes |
@@ -560,7 +561,7 @@ Ask questions not tied to the current project. Claude thinks globally across the
 - Pure knowledge-based answer
 - Scope: general programming concepts, patterns, best practices
 
-### `[notice]` - Inform Claude
+### `[notice]` / `[noti]` - Inform Claude
 
 Tell Claude a result or status. Claude acknowledges with minimal output.
 
@@ -574,6 +575,31 @@ Tell Claude a result or status. Claude acknowledges with minimal output.
 - Claude receives and acknowledges the information
 - Minimal response (e.g., "Got it." / "Noted." / "✓")
 - No action taken unless explicitly needed
+
+### `[whatfuck]` / `[wtf]` - Reset Context
+
+Use when Claude appears confused or hallucinating. Claude will reorganize and verify context.
+
+```
+[wtf]
+[wtf] you said file X exists but it doesn't
+[whatfuck] we were working on feature Y, not Z
+```
+
+**Claude's Recovery Steps:**
+1. **Pause** - Stop current action
+2. **Acknowledge** - "Let me reorganize my understanding"
+3. **Re-read core context:**
+   - `claude-with-me/README.md` (conventions)
+   - `project-context/` TODO files (current tasks)
+   - Recently discussed files (if mentioned)
+4. **Summarize** - State current understanding:
+   - What project/task we're working on
+   - What was the last completed action
+   - What was I about to do
+5. **Ask** - Clarify anything uncertain
+
+**User's role:** Correct any remaining misunderstandings after Claude's summary.
 
 ### `[add-note]` - Add Documentation
 ```

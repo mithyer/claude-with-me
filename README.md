@@ -22,18 +22,63 @@ Based on project type, load the appropriate conventions file:
 
 ## Code Modification Modes
 
-**Before ANY code modification, ask the user to choose a mode:**
+**Claude will estimate code changes before starting:**
+
+| Estimated Lines | Action |
+|-----------------|--------|
+| **≤200 lines** | "代码量约 X 行，直接执行" - proceed without asking |
+| **>200 lines** | Offer mode selection below |
 
 ### Mode 1: Scoped Mode (LIMIT)
-- Each change limited to **≤100 lines** of code added/removed
-- If exceeds 100 lines, **must split** into smaller tasks
+- Each change limited to **≤200 lines** of code added/removed
+- If exceeds 200 lines, use **Skeleton First** approach (see below)
 - Create task tracking files in `../project-context/{Project}/`
 - Link code comments to task files
 
 ### Mode 2: Freeform Mode (FREE)
 - No line limits
 - Make changes as needed to complete the task
-- Suitable for smaller, well-defined changes
+- Suitable for well-defined changes where full context is clear
+
+---
+
+### Skeleton First Approach
+
+When code exceeds 200 lines, Claude builds **incrementally**:
+
+**Pass 1 - Structure (搭架子):**
+```swift
+class AuthService {
+    private let networkClient: NetworkClient
+
+    init(networkClient: NetworkClient) {
+        // TODO: Store dependency and configure
+    }
+
+    func login(email: String, password: String) async throws -> User {
+        // TODO: Validate input format
+        // TODO: Call network API
+        // TODO: Parse and return response
+        fatalError("Not implemented")
+    }
+
+    func logout() async {
+        // TODO: Clear stored tokens
+        // TODO: Notify observers
+    }
+}
+```
+
+**Pass 2+ - Implementation (填内容):**
+- Claude fills TODO sections incrementally
+- Each pass stays within **≤200 lines**
+- User can review structure before implementation
+
+**Benefits:**
+- ✅ Always compilable (fatalError placeholders)
+- ✅ Architecture review before implementation
+- ✅ Easy to track progress via TODOs
+- ✅ Lower risk of rework
 
 ---
 
@@ -55,6 +100,7 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[check]` | Review resolved conflicts (:keep) | No |
 | `[again]` | Resume/retry interrupted operation | Yes |
 | `[git]` | Git operations (commit, push, etc.) | No |
+| `[lite]` | Low-token mode (I provide, you execute) | Partial |
 | `[add-note]` | Add documentation | Yes |
 | `[file-add]<File>` | Create new file | Yes |
 | `[file-rm]<File>` | Delete file | Yes |
@@ -393,6 +439,58 @@ Perform git-related operations.
 ```
 
 **Safety:** Claude will warn before destructive operations (force push, hard reset, etc.)
+
+### `[lite]` - Low-Token Mode
+
+Reduce token consumption by shifting execution to user.
+
+```
+[lite] Add unit tests for AuthService
+[lite:add] New login feature
+```
+
+**How it works:**
+
+| Task | Claude Does | User Does |
+|------|-------------|-----------|
+| Analysis/Design | ✅ Think & plan | Review |
+| Code changes | ✅ Provide code/diff | Paste into IDE |
+| Run tests/build | ❌ Skip | Run & report result |
+| Search codebase | ❌ Skip | Search & tell location |
+| Git operations | ❌ Skip | Execute commands |
+
+**Workflow example:**
+```
+User: [lite:add] Add validation to login form
+
+Claude: Here's the implementation:
+
+1. Add to LoginViewModel.swift (line 45):
+   ```swift
+   func validate() -> Bool {
+       guard !email.isEmpty else { return false }
+       guard password.count >= 8 else { return false }
+       return true
+   }
+   ```
+
+2. Update LoginView.swift (line 78):
+   ```swift
+   Button("Login") {
+       guard viewModel.validate() else { return }
+       // ...
+   }
+   ```
+
+Please paste these changes, run tests, and tell me the result.
+```
+
+**When to use:**
+- Long coding sessions (preserve context)
+- Large file changes (avoid Write tool overhead)
+- Test/build cycles (you see output faster anyway)
+
+**Can combine:** `[lite:fix]`, `[lite:add]`, `[lite:imp]`
 
 ### `[add-note]` - Add Documentation
 ```

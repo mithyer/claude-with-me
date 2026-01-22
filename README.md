@@ -146,6 +146,7 @@ Modifiers can be added to any command with `:modifier` syntax. **Multiple modifi
 | `:lite` | Low-token mode |
 | `:read` | Preview only (dry run) |
 | `:think` | Deep analysis mode |
+| `:sp` | Invoke superpowers skill (structured methodology) |
 
 **Order doesn't matter** - these are all equivalent:
 ```
@@ -153,6 +154,7 @@ Modifiers can be added to any command with `:modifier` syntax. **Multiple modifi
 [read:fix] = [fix:read]
 [think:add] = [add:think]
 [lite:imp] = [imp:lite]
+[fix:sp] = [sp:fix]
 ```
 
 **Combined example:** `[fix:keep:log]<file:Manager.swift> Memory leak`
@@ -231,14 +233,50 @@ Consider auditing other managers for similar issues.
 
 ---
 
+#### `:sp` - Superpowers Skill Mode
+
+```
+[fix:sp] Complex bug description     → systematic-debugging skill
+[add:sp] New feature description     → brainstorming skill first
+[think:sp] Architecture decision     → writing-plans skill
+```
+
+Invokes structured methodology from superpowers plugin:
+
+| Command + `:sp` | Superpowers Skill Triggered |
+|-----------------|----------------------------|
+| `[fix:sp]` | `systematic-debugging` - root cause analysis, hypothesis testing |
+| `[add:sp]` | `brainstorming` - explore requirements before implementation |
+| `[think:sp]` | `writing-plans` - structured implementation plan |
+| `[todo:sp]` | `executing-plans` - methodical plan execution |
+| `[check:sp]` | `verification-before-completion` - verify before claiming done |
+| `[review:sp]` | `requesting-code-review` - structured code review |
+
+**When to use `:sp`:**
+- Complex multi-step tasks
+- Unfamiliar codebase areas
+- Need structured methodology over quick action
+- Want documented reasoning trail
+
+**Without `:sp`:** Quick, lightweight, conversational approach (default).
+
+**Documentation output:**
+| Type | Location |
+|------|----------|
+| Global (patterns, strategies, conventions) | `claude-with-me/` |
+| Project-specific (plans, context, decisions) | `project-context/{Project}/` |
+
+---
+
 #### Combined Modifiers
 
 ```
 [fix:keep:log] Memory leak - insert markers AND log changes
 [imp:read:log] Analyze improvements and log plan (no changes)
+[fix:sp:log] Complex bug - use systematic debugging AND log reasoning
 ```
 
-Order doesn't matter: `[fix:keep:log]` = `[fix:log:keep]`
+Order doesn't matter: `[fix:keep:log]` = `[fix:log:keep]` = `[log:fix:keep]`
 
 ---
 

@@ -95,6 +95,7 @@ Use these prefixes at the start of your messages to indicate intent:
 | `[add]` | New feature | Yes |
 | `[rm]` | Remove feature/code | Yes |
 | `[review]` | Code review | No |
+| `[review-cm]<hash>` | Review commit for issues/bugs | No |
 | `[search]` | Search codebase | No |
 | `[read]` | Preview changes (dry run) | No |
 | `[think]` | Deep thinking & exploration | No |
@@ -316,6 +317,34 @@ Claude will: Check dependencies, remove carefully, clean up related resources.
 [review]<class:NetworkClient> Review error handling
 ```
 Claude will: Analyze issues, check thread safety, suggest improvements without implementing.
+
+### `[review-cm]<hash>` - Review Commit (Read-Only)
+```
+[review-cm] 8b9b369
+[review-cm] HEAD~1
+[review-cm] feature/auth
+```
+Claude will:
+- Show commit diff and analyze all changes
+- Identify potential bugs, logic errors, edge cases
+- Check thread safety, memory management, error handling
+- Detect variable shadowing, type mismatches, behavioral changes
+- Highlight risky patterns and suggest improvements
+- **Output format**: Summary table + detailed findings per issue
+
+**Example output:**
+```
+| Issue | Severity | Location |
+|-------|----------|----------|
+| Thread safety | High | AsyncQueue.swift:42 |
+| Logic change | Medium | Manager.swift:108 |
+
+### 1. Thread safety issue
+[Code snippet and explanation]
+
+### 2. Logic change
+[Code snippet and explanation]
+```
 
 ### `[search]` - Search Codebase (Read-Only)
 ```
